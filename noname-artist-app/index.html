@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noname Stage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-label="Noname Stage">
+        <div class="hero__backdrop" aria-hidden="true"></div>
+        <nav class="nav">
+          <a class="brand" href="#top" aria-label="Noname Stage ana sayfa">
+            <span class="brand__mark">NS</span>
+            <span>Noname Stage</span>
+          </a>
+          <div class="nav__actions">
+            <a href="#artists" class="nav__link">Sanatçılar</a>
+            <button class="nav__button nav__button--ghost" id="logoutButton" type="button" hidden>Çıkış yap</button>
+            <a href="#join" class="nav__button" id="joinLink">Katıl</a>
+          </div>
+        </nav>
+
+        <div class="hero__content" id="top">
+          <div class="hero__copy">
+            <p class="eyebrow">Bağımsız müzisyen ağı</p>
+            <h1>Noname Stage</h1>
+            <p class="hero__text">
+              Keşfedilmeyi bekleyen müzisyenler için tek profilden tüm müzik ve sosyal medya bağlantıları.
+            </p>
+            <div class="hero__stats" aria-label="Platform özeti">
+              <span><strong id="artistCountHero">0</strong> sanatçı</span>
+              <span><strong>7</strong> platform</span>
+              <span><strong>1</strong> profil</span>
+            </div>
+          </div>
+
+          <form class="join-card" id="artistForm" autocomplete="off">
+            <div class="join-card__head" id="join">
+              <p class="eyebrow" id="formEyebrow">Gerçek üyelik</p>
+              <h2 id="formTitle">Sanatçı hesabı oluştur</h2>
+              <p class="join-card__note" id="accountStatus">Kayıtlar sunucudaki veri dosyasına kaydedilir.</p>
+            </div>
+
+            <div class="auth-tabs" role="tablist" aria-label="Üyelik işlemi">
+              <button class="auth-tab is-active" type="button" data-auth-mode="register">Kayıt ol</button>
+              <button class="auth-tab" type="button" data-auth-mode="login">Giriş yap</button>
+            </div>
+
+            <div class="account-grid">
+              <label>
+                <span>E-posta</span>
+                <input name="email" type="email" placeholder="sanatci@email.com" required />
+              </label>
+              <label>
+                <span>Şifre</span>
+                <input name="password" type="password" placeholder="En az 6 karakter" minlength="6" required />
+              </label>
+            </div>
+
+            <div class="profile-fields" id="profileFields">
+              <label>
+                <span>Sanatçı adı</span>
+                <input name="name" type="text" placeholder="Örn. Deniz Kayıp" required />
+              </label>
+
+              <label>
+                <span>Tür</span>
+                <input name="genre" type="text" placeholder="Alternatif pop, rap, rock..." required />
+              </label>
+
+              <label>
+                <span>Şehir</span>
+                <input name="city" type="text" placeholder="İstanbul" required />
+              </label>
+
+              <div class="platform-grid">
+                <label>
+                  <span>Apple Music</span>
+                  <input name="apple" type="url" placeholder="https://music.apple.com/..." />
+                </label>
+                <label>
+                  <span>Spotify</span>
+                  <input name="spotify" type="url" placeholder="https://open.spotify.com/..." />
+                </label>
+                <label>
+                  <span>YouTube</span>
+                  <input name="youtube" type="url" placeholder="https://youtube.com/..." />
+                </label>
+                <label>
+                  <span>YouTube Music</span>
+                  <input name="youtubeMusic" type="url" placeholder="https://music.youtube.com/..." />
+                </label>
+                <label>
+                  <span>Instagram</span>
+                  <input name="instagram" type="url" placeholder="https://instagram.com/..." />
+                </label>
+                <label>
+                  <span>Facebook</span>
+                  <input name="facebook" type="url" placeholder="https://facebook.com/..." />
+                </label>
+                <label>
+                  <span>TikTok</span>
+                  <input name="tiktok" type="url" placeholder="https://tiktok.com/@..." />
+                </label>
+              </div>
+            </div>
+
+            <button class="primary-button" id="submitButton" type="submit">Hesabı oluştur ve yayınla</button>
+            <p class="form-status" id="formStatus" role="status"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="directory" id="artists">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Canlı liste</p>
+            <h2>Sanatçılar</h2>
+          </div>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+            </svg>
+            <input id="searchInput" type="search" placeholder="Sanatçı, tür veya şehir ara" />
+          </div>
+        </div>
+
+        <div class="artist-list" id="artistList" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <aside class="profile-panel" id="profilePanel" aria-hidden="true">
+      <div class="profile-panel__overlay" data-close-panel></div>
+      <article class="profile-card" role="dialog" aria-modal="true" aria-labelledby="profileName">
+        <button class="icon-button" type="button" aria-label="Kapat" data-close-panel>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m18 6-12 12M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="profile-card__top">
+          <div class="avatar" id="profileAvatar">NS</div>
+          <div>
+            <p class="eyebrow" id="profileGenre">Sanatçı</p>
+            <h2 id="profileName">Sanatçı adı</h2>
+            <p id="profileCity">Şehir</p>
+          </div>
+        </div>
+        <div class="link-stack" id="profileLinks"></div>
+      </article>
+    </aside>
+
+    <script src="app.js"></script>
+  </body>
+</html>
