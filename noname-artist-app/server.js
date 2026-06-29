@@ -4,11 +4,10 @@ const path = require("path");
 const crypto = require("crypto");
 
 const root = __dirname;
-const dataDir = path.join(root, "data");
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(root, "data");
 const dbPath = path.join(dataDir, "db.json");
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
-const sessions = new Map();
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -21,8 +20,19 @@ const types = {
 function ensureDb() {
   fs.mkdirSync(dataDir, { recursive: true });
   if (!fs.existsSync(dbPath)) {
-    writeDb({ users: [], artists: [] });
+    writeDb({ users: [], artists: [], sessions: [] });
+    return;
   }
+
+  const db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+  let changed = false;
+  for (const key of ["users", "artists", "sessions"]) {
+    if (!Array.isArray(db[key])) {
+      db[key] = [];
+      changed = true;
+    }
+  }
+  if (changed) writeDb(db);
 }
 
 function readDb() {
@@ -51,11 +61,13 @@ function parseCookies(req) {
 
 function currentUser(req) {
   const sid = parseCookies(req).sid;
-  if (!sid || !sessions.has(sid)) return null;
+  if (!sid) return null;
 
   const db = readDb();
-  const userId = sessions.get(sid);
-  const user = db.users.find((item) => item.id === userId);
+  const session = db.sessions.find((item) => item.id === sid && new Date(item.expiresAt) > new Date());
+  if (!session) return null;
+
+  const user = db.users.find((item) => item.id === session.userId);
   return user ? { db, user, sid } : null;
 }
 
@@ -142,11 +154,14 @@ function validateArtist(artist) {
   return "";
 }
 
-function createSession(res, userId) {
+function createSession(db, userId) {
   const sid = crypto.randomUUID();
-  sessions.set(sid, userId);
+  const now = Date.now();
+  const expiresAt = new Date(now + 1000 * 60 * 60 * 24 * 30).toISOString();
+  db.sessions = (db.sessions || []).filter((session) => new Date(session.expiresAt) > new Date());
+  db.sessions.push({ id: sid, userId, createdAt: new Date(now).toISOString(), expiresAt });
   return {
-    "Set-Cookie": `sid=${sid}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800`,
+    "Set-Cookie": `sid=${sid}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`,
   };
 }
 
@@ -215,9 +230,10 @@ async function handleApi(req, res, pathname) {
 
     db.users.push(user);
     db.artists.unshift(savedArtist);
+    const sessionHeaders = createSession(db, userId);
     writeDb(db);
 
-    sendJson(res, 201, { user: publicUser(user), artist: publicArtist(savedArtist) }, createSession(res, userId));
+    sendJson(res, 201, { user: publicUser(user), artist: publicArtist(savedArtist) }, sessionHeaders);
     return true;
   }
 
@@ -234,13 +250,19 @@ async function handleApi(req, res, pathname) {
     }
 
     const artist = db.artists.find((item) => item.id === user.artistId);
-    sendJson(res, 200, { user: publicUser(user), artist: artist ? publicArtist(artist) : null }, createSession(res, user.id));
+    const sessionHeaders = createSession(db, user.id);
+    writeDb(db);
+    sendJson(res, 200, { user: publicUser(user), artist: artist ? publicArtist(artist) : null }, sessionHeaders);
     return true;
   }
 
   if (req.method === "POST" && pathname === "/api/logout") {
     const sid = parseCookies(req).sid;
-    if (sid) sessions.delete(sid);
+    if (sid) {
+      const db = readDb();
+      db.sessions = (db.sessions || []).filter((session) => session.id !== sid);
+      writeDb(db);
+    }
     sendJson(res, 200, { ok: true }, { "Set-Cookie": "sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0" });
     return true;
   }
