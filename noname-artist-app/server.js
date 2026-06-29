@@ -7,6 +7,7 @@ const root = __dirname;
 const dataDir = path.join(root, "data");
 const dbPath = path.join(dataDir, "db.json");
 const port = Number(process.env.PORT || 8787);
+const host = process.env.HOST || "0.0.0.0";
 const sessions = new Map();
 
 const types = {
@@ -357,6 +358,6 @@ http
       sendJson(res, 500, { error: error.message || "Sunucu hatası." });
     }
   })
-  .listen(port, "127.0.0.1", () => {
-    console.log(`Noname Stage running at http://127.0.0.1:${port}/`);
+  .listen(port, host, () => {
+    console.log(`Noname Stage running on ${host}:${port}`);
   });
