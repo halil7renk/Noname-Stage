@@ -11,7 +11,7 @@
   </head>
   <body>
     <main class="shell">
-      <section class="hero" aria-label="Noname Stage">
+      <section class="hero" id="homeView" aria-label="Noname Stage">
         <div class="hero__backdrop" aria-hidden="true"></div>
         <nav class="nav">
           <a class="brand" href="#top" aria-label="Noname Stage ana sayfa">
@@ -32,10 +32,10 @@
             <p class="hero__text">
               Keşfedilmeyi bekleyen müzisyenler için tek profilden tüm müzik ve sosyal medya bağlantıları.
             </p>
-            <div class="hero__stats" aria-label="Platform özeti">
+            <div class="hero__stats" aria-label="Canlı platform özeti">
               <span><strong id="artistCountHero">0</strong> sanatçı</span>
-              <span><strong>7</strong> platform</span>
-              <span><strong>1</strong> profil</span>
+              <span><strong id="platformCountHero">0</strong> aktif platform</span>
+              <span><strong id="profileCountHero">0</strong> profil</span>
             </div>
           </div>
 
@@ -43,7 +43,7 @@
             <div class="join-card__head" id="join">
               <p class="eyebrow" id="formEyebrow">Gerçek üyelik</p>
               <h2 id="formTitle">Sanatçı hesabı oluştur</h2>
-              <p class="join-card__note" id="accountStatus">Kayıtlar sunucudaki veri dosyasına kaydedilir.</p>
+              <p class="join-card__note" id="accountStatus">Kayıtlar canlı sanatçı listesine eklenir.</p>
             </div>
 
             <div class="auth-tabs" role="tablist" aria-label="Üyelik işlemi">
@@ -107,12 +107,32 @@
                   <span>TikTok</span>
                   <input name="tiktok" type="url" placeholder="https://tiktok.com/@..." />
                 </label>
+                <label>
+                  <span>Twitter / X</span>
+                  <input name="twitter" type="url" placeholder="https://x.com/..." />
+                </label>
               </div>
             </div>
 
             <button class="primary-button" id="submitButton" type="submit">Hesabı oluştur ve yayınla</button>
             <p class="form-status" id="formStatus" role="status"></p>
           </form>
+        </div>
+      </section>
+
+      <section class="member-screen" id="memberScreen" hidden>
+        <div class="member-shell">
+          <button class="nav__button nav__button--ghost" id="backToHomeButton" type="button">Ana ekrana dön</button>
+          <div class="member-hero">
+            <div class="avatar member-avatar" id="memberAvatar">NS</div>
+            <div>
+              <p class="eyebrow" id="memberNumber">Üye</p>
+              <h2 id="memberName">Sanatçı profili</h2>
+              <p id="memberMeta">Tür · Şehir</p>
+            </div>
+          </div>
+          <div class="member-stats" id="memberStats"></div>
+          <div class="member-links" id="memberLinks"></div>
         </div>
       </section>
 

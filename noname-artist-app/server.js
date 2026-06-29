@@ -18,58 +18,10 @@ const types = {
   ".json": "application/json; charset=utf-8",
 };
 
-const starterArtists = [
-  {
-    id: crypto.randomUUID(),
-    ownerId: null,
-    name: "Lal Gece",
-    genre: "Alternatif pop",
-    city: "İstanbul",
-    apple: "https://music.apple.com/",
-    spotify: "https://open.spotify.com/",
-    youtube: "https://youtube.com/",
-    youtubeMusic: "https://music.youtube.com/",
-    instagram: "https://instagram.com/",
-    facebook: "",
-    tiktok: "https://tiktok.com/",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    ownerId: null,
-    name: "Mavi Perde",
-    genre: "Indie rock",
-    city: "Ankara",
-    apple: "",
-    spotify: "https://open.spotify.com/",
-    youtube: "https://youtube.com/",
-    youtubeMusic: "https://music.youtube.com/",
-    instagram: "https://instagram.com/",
-    facebook: "https://facebook.com/",
-    tiktok: "",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: crypto.randomUUID(),
-    ownerId: null,
-    name: "Nova Ritim",
-    genre: "Elektronik",
-    city: "İzmir",
-    apple: "https://music.apple.com/",
-    spotify: "https://open.spotify.com/",
-    youtube: "",
-    youtubeMusic: "https://music.youtube.com/",
-    instagram: "https://instagram.com/",
-    facebook: "",
-    tiktok: "https://tiktok.com/",
-    createdAt: new Date().toISOString(),
-  },
-];
-
 function ensureDb() {
   fs.mkdirSync(dataDir, { recursive: true });
   if (!fs.existsSync(dbPath)) {
-    writeDb({ users: [], artists: starterArtists });
+    writeDb({ users: [], artists: [] });
   }
 }
 
@@ -123,14 +75,14 @@ function readBody(req) {
       body += chunk;
       if (body.length > 1_000_000) {
         req.destroy();
-        reject(new Error("İstek çok büyük."));
+        reject(new Error("Istek cok buyuk."));
       }
     });
     req.on("end", () => {
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch {
-        reject(new Error("Geçersiz JSON."));
+        reject(new Error("Gecersiz JSON."));
       }
     });
     req.on("error", reject);
@@ -175,12 +127,17 @@ function normalizeArtist(payload) {
     instagram: cleanUrl(payload.instagram),
     facebook: cleanUrl(payload.facebook),
     tiktok: cleanUrl(payload.tiktok),
+    twitter: cleanUrl(payload.twitter),
   };
+}
+
+function realArtists(db) {
+  return db.artists.filter((artist) => artist.ownerId);
 }
 
 function validateArtist(artist) {
   if (!artist.name || !artist.genre || !artist.city) {
-    return "Sanatçı adı, tür ve şehir zorunlu.";
+    return "Sanatci adi, tur ve sehir zorunlu.";
   }
   return "";
 }
@@ -196,7 +153,7 @@ function createSession(res, userId) {
 async function handleApi(req, res, pathname) {
   if (req.method === "GET" && pathname === "/api/artists") {
     const db = readDb();
-    sendJson(res, 200, { artists: db.artists.map(publicArtist) });
+    sendJson(res, 200, { artists: realArtists(db).map(publicArtist) });
     return true;
   }
 
@@ -220,7 +177,7 @@ async function handleApi(req, res, pathname) {
     const artistError = validateArtist(artist);
 
     if (!email.includes("@") || password.length < 6) {
-      sendJson(res, 400, { error: "Geçerli e-posta ve en az 6 karakter şifre gir." });
+      sendJson(res, 400, { error: "Gecerli e-posta ve en az 6 karakter sifre gir." });
       return true;
     }
 
@@ -231,13 +188,14 @@ async function handleApi(req, res, pathname) {
 
     const db = readDb();
     if (db.users.some((user) => user.email === email)) {
-      sendJson(res, 409, { error: "Bu e-posta ile hesap zaten var. Giriş yapabilirsin." });
+      sendJson(res, 409, { error: "Bu e-posta ile hesap zaten var. Giris yapabilirsin." });
       return true;
     }
 
     const userId = crypto.randomUUID();
     const artistId = crypto.randomUUID();
     const passwordData = hashPassword(password);
+    const memberNo = realArtists(db).length + 1;
     const user = {
       id: userId,
       email,
@@ -249,6 +207,7 @@ async function handleApi(req, res, pathname) {
     const savedArtist = {
       id: artistId,
       ownerId: userId,
+      memberNo,
       ...artist,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -270,7 +229,7 @@ async function handleApi(req, res, pathname) {
     const user = db.users.find((item) => item.email === email);
 
     if (!user || !verifyPassword(password, user)) {
-      sendJson(res, 401, { error: "E-posta veya şifre hatalı." });
+      sendJson(res, 401, { error: "E-posta veya sifre hatali." });
       return true;
     }
 
@@ -289,7 +248,7 @@ async function handleApi(req, res, pathname) {
   if (req.method === "PUT" && pathname === "/api/artists/me") {
     const auth = currentUser(req);
     if (!auth) {
-      sendJson(res, 401, { error: "Profil güncellemek için giriş yapmalısın." });
+      sendJson(res, 401, { error: "Profil guncellemek icin giris yapmalisin." });
       return true;
     }
 
@@ -303,7 +262,7 @@ async function handleApi(req, res, pathname) {
 
     const index = auth.db.artists.findIndex((item) => item.id === auth.user.artistId && item.ownerId === auth.user.id);
     if (index === -1) {
-      sendJson(res, 404, { error: "Sanatçı profili bulunamadı." });
+      sendJson(res, 404, { error: "Sanatci profili bulunamadi." });
       return true;
     }
 
@@ -355,9 +314,10 @@ http
 
       serveStatic(req, res, decodeURIComponent(pathname));
     } catch (error) {
-      sendJson(res, 500, { error: error.message || "Sunucu hatası." });
+      sendJson(res, 500, { error: error.message || "Sunucu hatasi." });
     }
   })
   .listen(port, host, () => {
     console.log(`Noname Stage running on ${host}:${port}`);
   });
+
