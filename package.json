@@ -1,0 +1,12 @@
+{
+  "name": "noname-stage-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('Static app ready for Vercel')\"",
+    "check": "node --check noname-artist-app/server.js && node --check noname-artist-app/app.js && node --check api/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

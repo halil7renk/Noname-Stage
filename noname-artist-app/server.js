@@ -4,7 +4,11 @@ const path = require("path");
 const crypto = require("crypto");
 
 const root = __dirname;
-const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(root, "data");
+const dataDir = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : process.env.VERCEL
+    ? path.join("/tmp", "noname-stage-data")
+    : path.join(root, "data");
 const dbPath = path.join(dataDir, "db.json");
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
@@ -325,21 +329,25 @@ function serveStatic(req, res, pathname) {
 
 ensureDb();
 
-http
-  .createServer(async (req, res) => {
-    const { pathname } = new URL(req.url, "http://localhost");
+async function handleRequest(req, res) {
+  const { pathname } = new URL(req.url, "http://localhost");
 
-    try {
-      if (pathname.startsWith("/api/") && (await handleApi(req, res, pathname))) {
-        return;
-      }
-
-      serveStatic(req, res, decodeURIComponent(pathname));
-    } catch (error) {
-      sendJson(res, 500, { error: error.message || "Sunucu hatasi." });
+  try {
+    if (pathname.startsWith("/api/") && (await handleApi(req, res, pathname))) {
+      return;
     }
-  })
-  .listen(port, host, () => {
+
+    serveStatic(req, res, decodeURIComponent(pathname));
+  } catch (error) {
+    sendJson(res, 500, { error: error.message || "Sunucu hatasi." });
+  }
+}
+
+if (require.main === module) {
+  http.createServer(handleRequest).listen(port, host, () => {
     console.log(`Noname Stage running on ${host}:${port}`);
   });
+}
+
+module.exports = { handleRequest };
 
